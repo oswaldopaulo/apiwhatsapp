@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 final class PassportAuthenticationTest extends TestCase
@@ -95,10 +96,15 @@ final class PassportAuthenticationTest extends TestCase
      */
     private function createUserAndTenant(): array
     {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
         $user = User::factory()->create();
         $tenant = $this->createTenant(ownerUserId: $user->id);
 
         $tenant->users()->attach($user->id, ['role' => 'owner']);
+        app(PermissionRegistrar::class)->setPermissionsTeamId($tenant->id);
+        $user->assignRole('owner');
+        app(PermissionRegistrar::class)->setPermissionsTeamId(null);
 
         return [$user, $tenant];
     }

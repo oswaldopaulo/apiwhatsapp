@@ -23,23 +23,23 @@ Route::middleware(['auth:api', 'tenant', 'tenant.access'])->group(function (): v
     });
 
     Route::post('/messages', fn () => response()->json(['message' => 'Message accepted for queueing.'], 202))
-        ->middleware('oauth.scopes:messages:send');
+        ->middleware(['oauth.scopes:messages:send', 'can:send messages']);
 
     Route::get('/messages', fn () => response()->json(['data' => []]))
-        ->middleware('oauth.scopes:messages:read');
+        ->middleware(['oauth.scopes:messages:read', 'can:read messages']);
 
     Route::post('/sessions', fn () => response()->json(['message' => 'Session operation accepted.'], 202))
-        ->middleware('oauth.scopes:sessions:manage');
+        ->middleware(['oauth.scopes:sessions:manage', 'can:manage sessions']);
 
     Route::get('/stats', fn () => response()->json(['data' => []]))
-        ->middleware('oauth.scopes:stats:read');
+        ->middleware(['oauth.scopes:stats:read', 'can:read stats']);
 
     Route::post('/webhooks', fn () => response()->json(['message' => 'Webhook configuration accepted.'], 202))
-        ->middleware('oauth.scopes:webhooks:manage');
+        ->middleware(['oauth.scopes:webhooks:manage', 'can:manage webhooks']);
 
     Route::get('/config', fn () => response()->json(['data' => []]))
-        ->middleware('oauth.scopes:config:read');
+        ->middleware(['oauth.scopes:config:read', 'can:manage config']);
 
     Route::put('/config', fn () => response()->json(['message' => 'Configuration update accepted.']))
-        ->middleware('oauth.scopes:config:write');
+        ->middleware(['oauth.scopes:config:write', 'can:manage config']);
 });

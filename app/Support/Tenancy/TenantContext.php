@@ -7,6 +7,7 @@ namespace App\Support\Tenancy;
 use App\Models\Tenant;
 use Closure;
 use RuntimeException;
+use Spatie\Permission\PermissionRegistrar;
 
 final class TenantContext
 {
@@ -15,6 +16,7 @@ final class TenantContext
     public function set(Tenant $tenant): void
     {
         $this->tenant = $tenant;
+        $this->syncPermissionTenantId($tenant->getKey());
     }
 
     public function get(): ?Tenant
@@ -46,16 +48,28 @@ final class TenantContext
     {
         $previous = $this->tenant;
         $this->tenant = $tenant;
+        $this->syncPermissionTenantId($tenant->getKey());
 
         try {
             return $callback();
         } finally {
             $this->tenant = $previous;
+            $this->syncPermissionTenantId($previous?->getKey());
         }
     }
 
     public function clear(): void
     {
         $this->tenant = null;
+        $this->syncPermissionTenantId(null);
+    }
+
+    private function syncPermissionTenantId(string|int|null $tenantId): void
+    {
+        if (! class_exists(PermissionRegistrar::class)) {
+            return;
+        }
+
+        app(PermissionRegistrar::class)->setPermissionsTeamId($tenantId);
     }
 }
