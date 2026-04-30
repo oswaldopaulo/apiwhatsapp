@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\TenantStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+final class Tenant extends Model
+{
+    use HasFactory;
+
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'public_id',
+        'name',
+        'owner_user_id',
+        'status',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'status' => TenantStatus::class,
+        ];
+    }
+
+    /**
+     * @return HasMany<WhatsApp\WhatsAppAccount, $this>
+     */
+    public function whatsAppAccounts(): HasMany
+    {
+        return $this->hasMany(WhatsApp\WhatsAppAccount::class);
+    }
+}
