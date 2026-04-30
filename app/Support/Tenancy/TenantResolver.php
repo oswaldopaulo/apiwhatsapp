@@ -17,12 +17,19 @@ final readonly class TenantResolver
 
     public function resolveFromRequest(Request $request): ?Tenant
     {
-        $tenantId = $request->header('X-Tenant-Id');
+        $tenantId = $this->resolveTenantIdentifier($request);
 
         if ($tenantId === null || $tenantId === '') {
             return null;
         }
 
         return $this->tenants->findByPublicId($tenantId);
+    }
+
+    private function resolveTenantIdentifier(Request $request): ?string
+    {
+        $header = (string) config('api-security.tenant.header', 'X-Tenant-ID');
+
+        return $request->header($header);
     }
 }

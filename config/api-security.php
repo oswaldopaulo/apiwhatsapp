@@ -9,7 +9,7 @@ return [
     */
 
     'tenant' => [
-        'header' => env('API_TENANT_HEADER', 'X-Tenant-Id'),
+        'header' => env('API_TENANT_HEADER', 'X-Tenant-ID'),
         'required' => (bool) env('API_TENANT_REQUIRED', true),
     ],
 

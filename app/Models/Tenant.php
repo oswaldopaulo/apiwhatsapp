@@ -8,10 +8,12 @@ use App\Enums\TenantStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Tenant extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     /**
      * @var list<string>
@@ -21,6 +23,7 @@ final class Tenant extends Model
         'name',
         'owner_user_id',
         'status',
+        'settings',
     ];
 
     /**
@@ -30,6 +33,7 @@ final class Tenant extends Model
     {
         return [
             'status' => TenantStatus::class,
+            'settings' => 'array',
         ];
     }
 

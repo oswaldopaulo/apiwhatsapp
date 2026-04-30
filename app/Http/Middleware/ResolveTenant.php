@@ -25,9 +25,13 @@ final readonly class ResolveTenant
     {
         $tenant = $this->tenantResolver->resolveFromRequest($request);
 
-        if ($tenant !== null) {
-            $this->tenantContext->set($tenant);
+        if ($tenant === null) {
+            abort_if((bool) config('api-security.tenant.required', true), 404, 'Tenant not found.');
+
+            return $next($request);
         }
+
+        $this->tenantContext->set($tenant);
 
         try {
             return $next($request);

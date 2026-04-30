@@ -2,37 +2,27 @@
 
 declare(strict_types=1);
 
-namespace App\Models\Concerns;
+namespace App\Models\Mongo\Concerns;
 
-use App\Models\Tenant;
-use App\Models\Scopes\TenantScope;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
-trait BelongsToTenant
+trait BelongsToTenantDocument
 {
-    public static function bootBelongsToTenant(): void
+    public static function bootBelongsToTenantDocument(): void
     {
-        static::addGlobalScope(new TenantScope(app(TenantContext::class)));
-
         static::creating(static fn (object $model): mixed => self::ensureTenantIsCurrent($model));
         static::updating(static fn (object $model): mixed => self::ensureTenantIsCurrent($model));
     }
 
     /**
-     * @return BelongsTo<Tenant, $this>
+     * @param Builder<static> $query
+     * @return Builder<static>
      */
-    public function tenant(): BelongsTo
+    public function scopeForTenant(Builder $query, string|int $tenantId): Builder
     {
-        return $this->belongsTo(Tenant::class);
-    }
-
-    public function belongsToCurrentTenant(): bool
-    {
-        $tenantId = app(TenantContext::class)->id();
-
-        return $tenantId !== null && (string) $this->tenant_id === (string) $tenantId;
+        return $query->where('tenant_id', $tenantId);
     }
 
     /**
@@ -53,7 +43,7 @@ trait BelongsToTenant
         }
 
         if ((string) $model->tenant_id !== (string) $tenantId) {
-            throw new AuthorizationException('The resource does not belong to the current tenant.');
+            throw new AuthorizationException('The document does not belong to the current tenant.');
         }
     }
 }
