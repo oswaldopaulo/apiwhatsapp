@@ -91,4 +91,8 @@ return [
         'presence_channel_prefix' => env('WHATSAPP_PRESENCE_CHANNEL_PREFIX', 'tenant'),
     ],
 
+    'stats' => [
+        'cache_seconds' => (int) env('WHATSAPP_STATS_CACHE_SECONDS', 60),
+    ],
+
 ];

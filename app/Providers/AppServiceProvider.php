@@ -21,6 +21,8 @@ use App\Queue\MongoMessageStore;
 use App\Queue\RedisQueueControl;
 use App\Repositories\Contracts\TenantRepository;
 use App\Repositories\Eloquent\EloquentTenantRepository;
+use App\Services\Stats\Contracts\StatsAggregationRepositoryInterface;
+use App\Services\Stats\MongoStatsAggregationRepository;
 use App\Services\WhatsApp\Contracts\WhatsAppProviderInterface;
 use App\Services\WhatsApp\Contracts\SessionEventRecorderInterface;
 use App\Services\WhatsApp\FakeWhatsAppProvider;
@@ -49,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SessionEventRecorderInterface::class, MongoSessionEventRecorder::class);
         $this->app->bind(WebhookEventStoreInterface::class, MongoWebhookEventStore::class);
         $this->app->bind(OutgoingWebhookLogStoreInterface::class, MongoOutgoingWebhookLogStore::class);
+        $this->app->bind(StatsAggregationRepositoryInterface::class, MongoStatsAggregationRepository::class);
         $this->app->bind(QueueControlInterface::class, function (): QueueControlInterface {
             $whatsAppDriver = (string) config('whatsapp.queue.driver', 'default');
             $defaultQueueConnection = (string) config('queue.default', 'database');

@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TenantConfigurationController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\WhatsAppSessionController;
@@ -64,6 +65,24 @@ Route::middleware(['auth:api', 'tenant', 'tenant.access'])->group(function (): v
 
         Route::delete('/sessions/{id}', [WhatsAppSessionController::class, 'destroy'])
             ->middleware(['oauth.scopes:sessions:manage', 'can:manage sessions']);
+
+        Route::get('/stats/messages/hour', [StatsController::class, 'messagesHour'])
+            ->middleware(['oauth.scopes:stats:read', 'can:read stats']);
+
+        Route::get('/stats/messages/day', [StatsController::class, 'messagesDay'])
+            ->middleware(['oauth.scopes:stats:read', 'can:read stats']);
+
+        Route::get('/stats/errors', [StatsController::class, 'errors'])
+            ->middleware(['oauth.scopes:stats:read', 'can:read stats']);
+
+        Route::get('/stats/queue', [StatsController::class, 'queue'])
+            ->middleware(['oauth.scopes:stats:read', 'can:read stats']);
+
+        Route::get('/stats/delivery-rate', [StatsController::class, 'deliveryRate'])
+            ->middleware(['oauth.scopes:stats:read', 'can:read stats']);
+
+        Route::get('/stats/sessions', [StatsController::class, 'sessions'])
+            ->middleware(['oauth.scopes:stats:read', 'can:read stats']);
 
         Route::get('/config', [TenantConfigurationController::class, 'show'])
             ->middleware(['oauth.scopes:config:read', 'can:manage config']);
