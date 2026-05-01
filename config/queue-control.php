@@ -73,6 +73,7 @@ return [
         'max_messages_per_minute' => (int) env('WHATSAPP_MAX_MESSAGES_PER_MINUTE', 20),
         'default_delay_min' => (int) env('WHATSAPP_DEFAULT_DELAY_MIN', 3),
         'default_delay_max' => (int) env('WHATSAPP_DEFAULT_DELAY_MAX', 12),
+        'congestion_position_threshold' => (int) env('WHATSAPP_QUEUE_CONGESTION_THRESHOLD', 100),
     ],
 
 ];

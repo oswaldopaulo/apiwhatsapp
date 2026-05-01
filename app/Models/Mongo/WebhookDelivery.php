@@ -10,8 +10,6 @@ final class WebhookDelivery extends MongoModel
 {
     use BelongsToTenantDocument;
 
-    protected $table = 'webhook_deliveries';
-
     protected string $collection = 'webhook_deliveries';
 
     /**

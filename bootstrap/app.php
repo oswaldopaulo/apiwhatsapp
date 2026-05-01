@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('api')->group(base_path('routes/oauth.php'));
         },
     )
+    ->withBroadcasting(
+        __DIR__.'/../routes/channels.php',
+        ['middleware' => ['api', 'auth:api']],
+    )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'oauth.scopes' => EnsureTokenHasScopes::class,

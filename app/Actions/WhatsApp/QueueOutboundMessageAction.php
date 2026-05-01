@@ -5,13 +5,18 @@ declare(strict_types=1);
 namespace App\Actions\WhatsApp;
 
 use App\DTOs\WhatsApp\OutboundMessageData;
-use App\Jobs\WhatsApp\SendWhatsAppMessageJob;
-use Illuminate\Foundation\Bus\PendingDispatch;
+use App\Queue\QueueManagerService;
+use App\Queue\QueueReservation;
 
-final class QueueOutboundMessageAction
+final readonly class QueueOutboundMessageAction
 {
-    public function execute(OutboundMessageData $message): PendingDispatch
+    public function __construct(
+        private QueueManagerService $queueManager,
+    ) {
+    }
+
+    public function execute(OutboundMessageData $message): QueueReservation
     {
-        return SendWhatsAppMessageJob::dispatch($message);
+        return $this->queueManager->enqueue($message);
     }
 }

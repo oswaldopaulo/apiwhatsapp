@@ -10,8 +10,6 @@ final class EventLog extends MongoModel
 {
     use BelongsToTenantDocument;
 
-    protected $table = 'event_logs';
-
     protected string $collection = 'event_logs';
 
     /**

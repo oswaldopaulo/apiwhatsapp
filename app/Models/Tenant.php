@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Tenant extends Model
@@ -47,6 +48,14 @@ final class Tenant extends Model
     }
 
     /**
+     * @return HasMany<WhatsApp\WhatsAppSession, $this>
+     */
+    public function whatsAppSessions(): HasMany
+    {
+        return $this->hasMany(WhatsApp\WhatsAppSession::class);
+    }
+
+    /**
      * @return BelongsToMany<User, $this>
      */
     public function users(): BelongsToMany
@@ -54,5 +63,13 @@ final class Tenant extends Model
         return $this->belongsToMany(User::class)
             ->withPivot('role')
             ->withTimestamps();
+    }
+
+    /**
+     * @return HasOne<TenantConfiguration, $this>
+     */
+    public function configuration(): HasOne
+    {
+        return $this->hasOne(TenantConfiguration::class);
     }
 }

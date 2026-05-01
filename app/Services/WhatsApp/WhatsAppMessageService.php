@@ -6,7 +6,7 @@ namespace App\Services\WhatsApp;
 
 use App\Actions\WhatsApp\QueueOutboundMessageAction;
 use App\DTOs\WhatsApp\OutboundMessageData;
-use Illuminate\Foundation\Bus\PendingDispatch;
+use App\Queue\QueueReservation;
 
 final readonly class WhatsAppMessageService
 {
@@ -15,7 +15,7 @@ final readonly class WhatsAppMessageService
     ) {
     }
 
-    public function queueOutboundMessage(OutboundMessageData $message): PendingDispatch
+    public function queueOutboundMessage(OutboundMessageData $message): QueueReservation
     {
         return $this->queueOutboundMessage->execute($message);
     }

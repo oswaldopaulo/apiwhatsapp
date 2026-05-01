@@ -59,6 +59,10 @@ return [
         'tolerance_seconds' => (int) env('WHATSAPP_WEBHOOK_TOLERANCE_SECONDS', 300),
     ],
 
+    'outgoing_webhooks' => [
+        'max_payload_bytes' => (int) env('WHATSAPP_OUTGOING_WEBHOOK_MAX_PAYLOAD_BYTES', 16384),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Persistence
@@ -68,8 +72,11 @@ return [
     'mongodb' => [
         'connection' => env('WHATSAPP_MONGODB_CONNECTION', 'mongodb'),
         'messages_collection' => env('WHATSAPP_MESSAGES_COLLECTION', 'messages'),
-        'events_collection' => env('WHATSAPP_EVENTS_COLLECTION', 'event_logs'),
-        'webhooks_collection' => env('WHATSAPP_WEBHOOKS_COLLECTION', 'webhook_deliveries'),
+        'message_logs_collection' => env('WHATSAPP_MESSAGE_LOGS_COLLECTION', 'message_logs'),
+        'webhook_events_collection' => env('WHATSAPP_WEBHOOK_EVENTS_COLLECTION', 'webhook_events'),
+        'session_events_collection' => env('WHATSAPP_SESSION_EVENTS_COLLECTION', 'session_events'),
+        'queue_events_collection' => env('WHATSAPP_QUEUE_EVENTS_COLLECTION', 'queue_events'),
+        'outgoing_webhook_logs_collection' => env('WHATSAPP_OUTGOING_WEBHOOK_LOGS_COLLECTION', 'outgoing_webhook_logs'),
         'statistics_collection' => env('WHATSAPP_STATISTICS_COLLECTION', 'statistics'),
     ],
 
