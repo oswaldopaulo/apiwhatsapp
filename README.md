@@ -1,59 +1,127 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# API WhatsApp SaaS
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Repositorio: https://github.com/oswaldopaulo/apiwhatsapp/
 
-## About Laravel
+API SaaS multi-tenant para WhatsApp, construida com Laravel 12. A arquitetura foi preparada para alta escalabilidade, isolamento por tenant, filas obrigatorias para envio de mensagens e operacao em VPS Linux com Supervisor.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Laravel 12
+- Laravel Passport
+- Laravel Reverb
+- Laravel Queue
+- MongoDB com `mongodb/laravel-mongodb`
+- Banco relacional para tenants, usuarios, OAuth2, permissoes e configuracoes
+- Redis com `phpredis/ext-redis` em producao
+- Database/cache como fallback quando configurado
+- PHPUnit
+- Spatie Laravel Permission
+- Spatie Laravel Data
+- Spatie Activity Log
+- Spatie Rate Limited Job Middleware
+- Supervisor para workers, Reverb e scheduler
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Principios
 
-## Learning Laravel
+- API multi-tenant.
+- Toda mensagem passa por fila.
+- Controllers nao enviam mensagens diretamente.
+- MongoDB armazena mensagens, logs, eventos, webhooks e estatisticas.
+- Banco relacional armazena tenants, usuarios, permissoes e configuracoes.
+- Redis em producao para filas, locks, cache, rate limit e controle anti-ban.
+- Reverb para eventos em tempo real.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Documentacao
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- Pagina inicial local: `/`
+- Producao VPS: [`public/docs/production.md`](public/docs/production.md)
+- Checklist de deploy: [`public/docs/deploy-checklist.md`](public/docs/deploy-checklist.md)
+- Comandos uteis: [`public/docs/operations.md`](public/docs/operations.md)
+- Swagger/OpenAPI: [`public/docs/api.html`](public/docs/api.html)
+- Nginx: [`public/docs/nginx/apiwhatsapp.conf`](public/docs/nginx/apiwhatsapp.conf)
+- Supervisor workers:
+  - [`whatsapp-worker.conf`](public/docs/supervisor/whatsapp-worker.conf)
+  - [`webhooks-worker.conf`](public/docs/supervisor/webhooks-worker.conf)
+  - [`default-worker.conf`](public/docs/supervisor/default-worker.conf)
+  - [`reverb.conf`](public/docs/supervisor/reverb.conf)
+  - [`scheduler.conf`](public/docs/supervisor/scheduler.conf)
+- Exemplos de consumo:
+  - [`laravel-client.md`](public/docs/examples/laravel-client.md)
+  - [`node-client.js`](public/docs/examples/node-client.js)
+  - [`browser-client.js`](public/docs/examples/browser-client.js)
+- Testes: [`tests/README.md`](tests/README.md)
 
-## Laravel Sponsors
+## Instalar localmente
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan passport:keys
+php artisan serve
+```
 
-### Premium Partners
+No Windows local, use `database`/`array` como fallback para cache e filas quando Redis nao estiver disponivel.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Testes
 
-## Contributing
+```bash
+php artisan test
+php artisan test --testsuite=Unit
+php artisan test --testsuite=Feature
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+A suite usa SQLite em memoria, `Queue::fake()`, `Event::fake()` e fakes em memoria para evitar chamadas reais a Redis, MongoDB Atlas e providers externos.
 
-## Code of Conduct
+## Deploy resumido
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+cd /var/www/apiwhatsapp
+git pull
+composer install --no-dev --optimize-autoloader
+php artisan migrate --force
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+php artisan queue:restart
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl restart apiwhatsapp-whatsapp-worker:*
+sudo supervisorctl restart apiwhatsapp-webhooks-worker:*
+sudo supervisorctl restart apiwhatsapp-default-worker:*
+sudo supervisorctl restart apiwhatsapp-reverb
+```
 
-## Security Vulnerabilities
+Veja o guia completo em [`public/docs/production.md`](public/docs/production.md).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Health checks e operacao
 
-## License
+```bash
+curl -fsS https://api.example.com/up
+php artisan queue:failed
+sudo supervisorctl status
+tail -f storage/logs/laravel.log
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Seguranca
+
+- Nao versionar `.env` real.
+- Usar `APP_DEBUG=false` em producao.
+- Usar TLS no Nginx.
+- Usar `REDIS_CLIENT=phpredis`.
+- Configurar scopes OAuth2 por consumidor.
+- Nunca expor `webhook_secret`, tokens OAuth2 ou credenciais de sessao.
+- Rotacionar logs e segredos periodicamente.
+
+## Creditos
+
+Ferramentas e projetos usados: Laravel, Laravel Passport, Laravel Reverb, Laravel Queue, PHPUnit, MongoDB Laravel, MongoDB Atlas, Redis, phpredis/ext-redis, Nginx, PHP-FPM, Supervisor, Composer, Swagger UI, OpenAPI e pacotes Spatie.
+
+Parte da documentacao e da organizacao arquitetural foi preparada com apoio de IA generativa via OpenAI Codex, revisada no contexto deste repositorio.
+
+## Licenca
+
+Defina a licenca do projeto antes de publicacao comercial. Dependencias de terceiros mantem suas respectivas licencas.

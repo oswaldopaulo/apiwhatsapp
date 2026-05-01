@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>API WhatsApp SaaS - Swagger</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+    <style>
+        body { margin: 0; background: #f7f8fa; }
+        header {
+            padding: 18px 28px;
+            background: #0f172a;
+            color: #fff;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        header a { color: #99f6e4; }
+        header p { margin: 4px 0 0; color: #cbd5e1; }
+        #swagger-ui { max-width: 1280px; margin: 0 auto; }
+        .credits {
+            max-width: 1180px;
+            margin: 24px auto;
+            padding: 16px 24px;
+            border-top: 1px solid #d8dee8;
+            color: #475569;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <strong>API WhatsApp SaaS - OpenAPI</strong>
+        <p>Repositorio: <a href="https://github.com/oswaldopaulo/apiwhatsapp/" target="_blank" rel="noopener">github.com/oswaldopaulo/apiwhatsapp</a></p>
+    </header>
+
+    <div id="swagger-ui"></div>
+
+    <section class="credits">
+        <p>Documentacao renderizada com Swagger UI e especificacao OpenAPI. Projeto construido com Laravel, Passport, Reverb, MongoDB, Redis/phpredis, PHPUnit e pacotes Spatie.</p>
+        <p>Parte desta documentacao foi preparada com apoio de IA generativa via OpenAI Codex e revisada no contexto do repositorio.</p>
+    </section>
+
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script>
+        window.onload = function () {
+            window.ui = SwaggerUIBundle({
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                displayRequestDuration: true,
+                filter: true,
+                spec: {
+                    openapi: '3.0.3',
+                    info: {
+                        title: 'API WhatsApp SaaS',
+                        version: '1.0.0',
+                        description: 'API multi-tenant para operacao SaaS de WhatsApp. Toda mensagem e enfileirada antes do envio.'
+                    },
+                    servers: [
+                        { url: 'https://api.example.com', description: 'Producao' },
+                        { url: 'http://localhost', description: 'Local' }
+                    ],
+                    tags: [
+                        { name: 'Auth' },
+                        { name: 'Config' },
+                        { name: 'Messages' },
+                        { name: 'Sessions' },
+                        { name: 'Stats' },
+                        { name: 'Webhooks' }
+                    ],
+                    components: {
+                        securitySchemes: {
+                            passport: {
+                                type: 'http',
+                                scheme: 'bearer',
+                                bearerFormat: 'OAuth2 access token'
+                            },
+                            tenantHeader: {
+                                type: 'apiKey',
+                                in: 'header',
+                                name: 'X-Tenant-ID'
+                            }
+                        },
+                        schemas: {
+                            Error: {
+                                type: 'object',
+                                properties: {
+                                    message: { type: 'string', example: 'Unauthorized.' }
+                                }
+                            },
+                            TenantConfig: {
+                                type: 'object',
+                                properties: {
+                                    tenant_id: { type: 'integer', example: 1 },
+                                    queue_driver: { type: 'string', enum: ['redis', 'database', 'default'] },
+                                    redis_enabled: { type: 'boolean' },
+                                    anti_ban_enabled: { type: 'boolean' },
+                                    delay_min_seconds: { type: 'integer', example: 3 },
+                                    delay_max_seconds: { type: 'integer', example: 12 },
+                                    max_messages_per_minute: { type: 'integer', example: 20 },
+                                    max_daily_messages: { type: 'integer', example: 1000 },
+                                    webhook_url: { type: 'string', nullable: true, example: 'https://client.example.com/webhook' },
+                                    webhook_secret_configured: { type: 'boolean' },
+                                    settings: { type: 'object' }
+                                }
+                            },
+                            SendMessageRequest: {
+                                type: 'object',
+                                required: ['session_id', 'to', 'type', 'content'],
+                                properties: {
+                                    session_id: { type: 'string', example: '1' },
+                                    to: { type: 'string', example: '5511999999999' },
+                                    type: { type: 'string', enum: ['text'], example: 'text' },
+                                    content: { type: 'string', example: 'mensagem' }
+                                }
+                            },
+                            SendMessageResponse: {
+                                type: 'object',
+                                properties: {
+                                    data: {
+                                        type: 'object',
+                                        properties: {
+                                            message_id: { type: 'string', format: 'uuid' },
+                                            status: { type: 'string', example: 'queued' },
+                                            queue_position_snapshot: { type: 'integer', example: 1 },
+                                            delay_seconds: { type: 'integer', example: 5 }
+                                        }
+                                    }
+                                }
+                            },
+                            Session: {
+                                type: 'object',
+                                properties: {
+                                    id: { type: 'integer', example: 1 },
+                                    tenant_id: { type: 'integer', example: 1 },
+                                    name: { type: 'string', example: 'Numero principal' },
+                                    provider: { type: 'string', example: 'fake' },
+                                    status: { type: 'string', enum: ['connecting', 'qr_pending', 'connected', 'disconnected', 'expired', 'banned', 'error'] },
+                                    phone_number: { type: 'string', nullable: true },
+                                    risk_score: { type: 'integer', example: 0 },
+                                    metadata: { type: 'object' }
+                                }
+                            },
+                            WebhookPayload: {
+                                type: 'object',
+                                required: ['event', 'tenant_public_id', 'payload'],
+                                properties: {
+                                    event: { type: 'string', example: 'message.delivered' },
+                                    tenant_public_id: { type: 'string', example: '00000000-0000-0000-0000-000000000000' },
+                                    payload: { type: 'object' }
+                                }
+                            }
+                        }
+                    },
+                    security: [
+                        { passport: [], tenantHeader: [] }
+                    ],
+                    paths: {
+                        '/api/me': {
+                            get: {
+                                tags: ['Auth'],
+                                summary: 'Retorna usuario autenticado e tenant atual',
+                                responses: {
+                                    200: { description: 'Usuario autenticado' },
+                                    401: { description: 'Nao autenticado', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+                                    403: { description: 'Tenant invalido' }
+                                }
+                            }
+                        },
+                        '/api/v1/config': {
+                            get: {
+                                tags: ['Config'],
+                                summary: 'Consulta configuracao do tenant',
+                                description: 'Requer scope config:read.',
+                                responses: {
+                                    200: { description: 'Configuracao', content: { 'application/json': { schema: { type: 'object', properties: { data: { $ref: '#/components/schemas/TenantConfig' } } } } } },
+                                    403: { description: 'Sem scope/permissao' }
+                                }
+                            },
+                            put: {
+                                tags: ['Config'],
+                                summary: 'Atualiza configuracao do tenant',
+                                description: 'Requer scope config:write. O webhook_secret nunca e retornado puro.',
+                                requestBody: {
+                                    required: true,
+                                    content: {
+                                        'application/json': {
+                                            schema: { $ref: '#/components/schemas/TenantConfig' }
+                                        }
+                                    }
+                                },
+                                responses: {
+                                    200: { description: 'Configuracao atualizada' },
+                                    422: { description: 'Validacao falhou' }
+                                }
+                            }
+                        },
+                        '/api/v1/messages/send': {
+                            post: {
+                                tags: ['Messages'],
+                                summary: 'Solicita envio de mensagem',
+                                description: 'Requer scope messages:send. O controller cria a mensagem e enfileira; nao envia diretamente.',
+                                requestBody: {
+                                    required: true,
+                                    content: {
+                                        'application/json': {
+                                            schema: { $ref: '#/components/schemas/SendMessageRequest' }
+                                        }
+                                    }
+                                },
+                                responses: {
+                                    202: { description: 'Mensagem enfileirada', content: { 'application/json': { schema: { $ref: '#/components/schemas/SendMessageResponse' } } } },
+                                    403: { description: 'Sem scope/permissao' },
+                                    409: { description: 'Lock de sessao em processamento' },
+                                    422: { description: 'Payload invalido' },
+                                    429: { description: 'Rate limit excedido' }
+                                }
+                            }
+                        },
+                        '/api/v1/sessions': {
+                            get: {
+                                tags: ['Sessions'],
+                                summary: 'Lista sessoes WhatsApp do tenant',
+                                description: 'Requer scope sessions:manage.',
+                                responses: {
+                                    200: { description: 'Lista de sessoes', content: { 'application/json': { schema: { type: 'object', properties: { data: { type: 'array', items: { $ref: '#/components/schemas/Session' } } } } } } }
+                                }
+                            },
+                            post: {
+                                tags: ['Sessions'],
+                                summary: 'Cria sessao WhatsApp',
+                                requestBody: {
+                                    required: true,
+                                    content: {
+                                        'application/json': {
+                                            schema: {
+                                                type: 'object',
+                                                required: ['name', 'provider'],
+                                                properties: {
+                                                    name: { type: 'string', example: 'Numero principal' },
+                                                    provider: { type: 'string', example: 'fake' },
+                                                    phone_number: { type: 'string', example: '5511999999999' },
+                                                    credentials: { type: 'object', description: 'Dados sensiveis criptografados pelo servidor.' },
+                                                    metadata: { type: 'object' }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                responses: {
+                                    201: { description: 'Sessao criada' },
+                                    422: { description: 'Payload invalido' }
+                                }
+                            }
+                        },
+                        '/api/v1/sessions/{id}': {
+                            get: {
+                                tags: ['Sessions'],
+                                summary: 'Detalha sessao do tenant',
+                                parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+                                responses: { 200: { description: 'Sessao' }, 404: { description: 'Nao encontrada' } }
+                            },
+                            delete: {
+                                tags: ['Sessions'],
+                                summary: 'Remove sessao do tenant',
+                                parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+                                responses: { 204: { description: 'Removida' }, 404: { description: 'Nao encontrada' } }
+                            }
+                        },
+                        '/api/v1/stats/messages/hour': {
+                            get: {
+                                tags: ['Stats'],
+                                summary: 'Mensagens por hora',
+                                description: 'Requer scope stats:read.',
+                                parameters: [
+                                    { name: 'date_from', in: 'query', schema: { type: 'string', format: 'date' } },
+                                    { name: 'date_to', in: 'query', schema: { type: 'string', format: 'date' } },
+                                    { name: 'session_id', in: 'query', schema: { type: 'string' } }
+                                ],
+                                responses: { 200: { description: 'Serie pronta para grafico' } }
+                            }
+                        },
+                        '/api/v1/stats/messages/day': { get: { tags: ['Stats'], summary: 'Mensagens por dia', responses: { 200: { description: 'Serie pronta para grafico' } } } },
+                        '/api/v1/stats/errors': { get: { tags: ['Stats'], summary: 'Erros por tipo', responses: { 200: { description: 'Erros agrupados' } } } },
+                        '/api/v1/stats/queue': { get: { tags: ['Stats'], summary: 'Fila por sessao', responses: { 200: { description: 'Status da fila' } } } },
+                        '/api/v1/stats/delivery-rate': { get: { tags: ['Stats'], summary: 'Taxa de entrega', responses: { 200: { description: 'Taxas agregadas' } } } },
+                        '/api/v1/stats/sessions': { get: { tags: ['Stats'], summary: 'Saude das sessoes', responses: { 200: { description: 'Resumo de sessoes' } } } },
+                        '/api/v1/webhooks/whatsapp': {
+                            post: {
+                                tags: ['Webhooks'],
+                                summary: 'Webhook recebido do provider WhatsApp',
+                                security: [],
+                                parameters: [
+                                    { name: 'X-Webhook-Signature', in: 'header', required: true, schema: { type: 'string' } },
+                                    { name: 'X-Webhook-Timestamp', in: 'header', required: true, schema: { type: 'string' } }
+                                ],
+                                requestBody: {
+                                    required: true,
+                                    content: {
+                                        'application/json': { schema: { $ref: '#/components/schemas/WebhookPayload' } }
+                                    }
+                                },
+                                responses: {
+                                    202: { description: 'Webhook aceito para processamento assicrono' },
+                                    401: { description: 'Assinatura invalida' },
+                                    409: { description: 'Replay detectado' }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>
