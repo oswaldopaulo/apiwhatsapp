@@ -6,7 +6,7 @@ use App\Http\Controllers\OAuth\AuditedAuthorizedAccessTokenController;
 use Laravel\Passport\Http\Controllers\ScopeController;
 use Laravel\Passport\Http\Controllers\TransientTokenController;
 
-Route::prefix('oauth')->group(function (): void {
+Route::middleware(['security.headers', 'security.json', 'security.rate:ip'])->prefix('oauth')->group(function (): void {
     Route::post('/token', [AuditedAccessTokenController::class, 'issueToken'])
         ->name('passport.token');
 

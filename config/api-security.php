@@ -21,9 +21,38 @@ return [
 
     'rate_limits' => [
         'api_per_minute' => (int) env('API_RATE_LIMIT_PER_MINUTE', 120),
+        'ip_per_minute' => (int) env('API_IP_RATE_LIMIT_PER_MINUTE', env('API_RATE_LIMIT_PER_MINUTE', 120)),
+        'tenant_per_minute' => (int) env('API_TENANT_RATE_LIMIT_PER_MINUTE', 600),
+        'sensitive_per_minute' => (int) env('API_SENSITIVE_RATE_LIMIT_PER_MINUTE', 60),
+        'session_per_minute' => (int) env('API_SESSION_RATE_LIMIT_PER_MINUTE', 30),
         'auth_per_minute' => (int) env('API_AUTH_RATE_LIMIT_PER_MINUTE', 20),
         'webhook_per_minute' => (int) env('API_WEBHOOK_RATE_LIMIT_PER_MINUTE', 300),
+        'decay_seconds' => (int) env('API_RATE_LIMIT_DECAY_SECONDS', 60),
+        'abuse_revocation_threshold' => (int) env('API_ABUSE_REVOCATION_THRESHOLD', 3),
         'store' => env('API_RATE_LIMIT_STORE', env('CACHE_STORE', 'database')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Request Locks
+    |--------------------------------------------------------------------------
+    */
+
+    'locks' => [
+        'enabled' => (bool) env('API_SECURITY_LOCKS_ENABLED', true),
+        'store' => env('API_SECURITY_LOCK_STORE', env('CACHE_STORE', 'database')),
+        'ttl_seconds' => (int) env('API_SECURITY_LOCK_TTL_SECONDS', 10),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | JSON API Enforcement
+    |--------------------------------------------------------------------------
+    */
+
+    'json' => [
+        'require_accept' => (bool) env('API_REQUIRE_JSON_ACCEPT', true),
+        'require_content_type' => (bool) env('API_REQUIRE_JSON_CONTENT_TYPE', true),
     ],
 
     /*
@@ -50,6 +79,10 @@ return [
         'content_type_options' => 'nosniff',
         'frame_options' => 'DENY',
         'referrer_policy' => 'no-referrer',
+        'xss_protection' => '0',
+        'permissions_policy' => 'camera=(), microphone=(), geolocation=()',
+        'content_security_policy' => "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+        'hsts' => 'max-age=31536000; includeSubDomains',
     ],
 
 ];

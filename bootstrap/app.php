@@ -3,7 +3,11 @@
 use App\Http\Middleware\EnsureTenantAccess;
 use App\Http\Middleware\EnsureTokenHasScopes;
 use App\Http\Middleware\AuditRateLimitAbuse;
+use App\Http\Middleware\AdvancedRateLimit;
+use App\Http\Middleware\RequestSecurityLock;
 use App\Http\Middleware\ResolveTenant;
+use App\Http\Middleware\RequireJsonRequest;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -27,9 +31,23 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'oauth.scopes' => EnsureTokenHasScopes::class,
             'audit.rate_limit_abuse' => AuditRateLimitAbuse::class,
+            'security.headers' => SecurityHeaders::class,
+            'security.json' => RequireJsonRequest::class,
+            'security.rate' => AdvancedRateLimit::class,
+            'security.lock' => RequestSecurityLock::class,
             'tenant' => ResolveTenant::class,
             'tenant.access' => EnsureTenantAccess::class,
         ]);
+
+        $middleware->prependToPriorityList(
+            \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+            RequireJsonRequest::class,
+        );
+
+        $middleware->prependToPriorityList(
+            RequireJsonRequest::class,
+            SecurityHeaders::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
