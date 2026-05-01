@@ -38,4 +38,11 @@ return [
         [['tenant_id' => 1, 'status' => 1, 'next_retry_at' => 1], []],
         [['tenant_id' => 1, 'event_type' => 1, 'created_at' => -1], []],
     ],
+
+    'audit_logs' => [
+        [['tenant_id' => 1, 'occurred_at' => -1], []],
+        [['tenant_id' => 1, 'action' => 1, 'occurred_at' => -1], []],
+        [['tenant_id' => 1, 'user_id' => 1, 'occurred_at' => -1], []],
+        [['occurred_at' => 1], ['expireAfterSeconds' => 15552000]],
+    ],
 ];

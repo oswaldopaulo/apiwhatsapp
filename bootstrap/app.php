@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureTenantAccess;
 use App\Http\Middleware\EnsureTokenHasScopes;
+use App\Http\Middleware\AuditRateLimitAbuse;
 use App\Http\Middleware\ResolveTenant;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'oauth.scopes' => EnsureTokenHasScopes::class,
+            'audit.rate_limit_abuse' => AuditRateLimitAbuse::class,
             'tenant' => ResolveTenant::class,
             'tenant.access' => EnsureTenantAccess::class,
         ]);

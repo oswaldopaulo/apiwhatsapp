@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Services\Audit\AuditService;
 use App\Support\Tenancy\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ final readonly class EnsureTenantAccess
 {
     public function __construct(
         private TenantContext $tenantContext,
+        private AuditService $audit,
     ) {
     }
 
@@ -36,6 +38,10 @@ final readonly class EnsureTenantAccess
         $isMember = $user->tenants()->whereKey($tenant->getKey())->exists();
 
         if (! $isOwner && ! $isMember) {
+            $this->audit->record('tenant.cross_access_attempt', 'blocked', [
+                'requested_tenant_id' => $tenant->getKey(),
+            ], $tenant, $user, $request);
+
             return response()->json(['message' => 'This token cannot access the requested tenant.'], Response::HTTP_FORBIDDEN);
         }
 

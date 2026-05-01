@@ -21,6 +21,9 @@ use App\Queue\MongoMessageStore;
 use App\Queue\RedisQueueControl;
 use App\Repositories\Contracts\TenantRepository;
 use App\Repositories\Eloquent\EloquentTenantRepository;
+use App\Services\Audit\Contracts\AuditLogStoreInterface;
+use App\Services\Audit\MongoAuditLogStore;
+use App\Services\Audit\NullAuditLogStore;
 use App\Services\Stats\Contracts\StatsAggregationRepositoryInterface;
 use App\Services\Stats\MongoStatsAggregationRepository;
 use App\Services\WhatsApp\Contracts\WhatsAppProviderInterface;
@@ -44,6 +47,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(TenantContext::class);
         $this->app->bind(TenantRepository::class, EloquentTenantRepository::class);
+        $this->app->bind(
+            AuditLogStoreInterface::class,
+            $this->app->environment('testing') ? NullAuditLogStore::class : MongoAuditLogStore::class,
+        );
         $this->app->bind(MessageQueueRecorderInterface::class, MongoMessageQueueRecorder::class);
         $this->app->bind(MessageStoreInterface::class, MongoMessageStore::class);
         $this->app->bind(MessageLogWriterInterface::class, MongoMessageLogWriter::class);

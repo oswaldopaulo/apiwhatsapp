@@ -14,6 +14,7 @@ use App\Events\WhatsApp\SessionQrUpdated;
 use App\Events\WhatsApp\SessionStatusChanged;
 use App\Models\Tenant;
 use App\Models\WhatsApp\WhatsAppSession;
+use App\Services\Audit\AuditService;
 use App\Services\WhatsApp\Contracts\SessionEventRecorderInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
@@ -22,6 +23,7 @@ final readonly class SessionService
 {
     public function __construct(
         private SessionEventRecorderInterface $events,
+        private AuditService $audit,
     ) {
     }
 
@@ -61,6 +63,13 @@ final readonly class SessionService
         ]);
 
         event(new SessionCreated($tenant->getKey(), $session->getKey(), $status->value));
+        $this->audit->record('session.created', 'success', [
+            'session_id' => $session->getKey(),
+            'name' => $session->name,
+            'provider' => $session->provider,
+            'status' => $status->value,
+            'phone_number' => $session->phone_number,
+        ], $tenant);
 
         return $session->refresh();
     }

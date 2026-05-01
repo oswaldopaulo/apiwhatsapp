@@ -11,6 +11,7 @@ use App\Models\Mongo\Message;
 use App\Queue\Contracts\MessageLogWriterInterface;
 use App\Queue\Contracts\MessageStoreInterface;
 use App\Queue\Middleware\SessionRateLimited;
+use App\Services\Audit\AuditService;
 use App\Services\WhatsApp\Contracts\WhatsAppProviderInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -66,6 +67,7 @@ class SendMessageJob implements ShouldQueue
         MessageStoreInterface $messages,
         MessageLogWriterInterface $logs,
         WhatsAppProviderInterface $provider,
+        AuditService $audit,
     ): void {
         $message = $messages->findByMessageId($this->messageId)
             ?? throw (new ModelNotFoundException())->setModel(Message::class, [$this->messageId]);
@@ -105,6 +107,11 @@ class SendMessageJob implements ShouldQueue
                 'attempt' => $this->attempts(),
                 'error' => $this->safeExceptionMessage($exception),
             ]);
+            $audit->criticalFailure('message.send_failed', $exception, [
+                'message_id' => $message->message_id,
+                'session_id' => $message->session_id,
+                'attempt' => $this->attempts(),
+            ], $message->tenant_id);
 
             event(new MessageFailed($message->tenant_id, $message->message_id, $message->session_id, $this->safeExceptionMessage($exception)));
 

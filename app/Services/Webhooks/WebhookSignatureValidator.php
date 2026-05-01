@@ -6,6 +6,7 @@ namespace App\Services\Webhooks;
 
 use App\Models\Tenant;
 use App\Models\TenantConfiguration;
+use App\Services\Audit\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -13,13 +14,26 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class WebhookSignatureValidator
 {
+    public function __construct(
+        private readonly AuditService $audit,
+    ) {
+    }
+
     public function validate(Request $request, Tenant $tenant): string
     {
-        $timestamp = $this->timestamp($request);
-        $signature = $this->signature($request);
+        try {
+            $timestamp = $this->timestamp($request);
+            $signature = $this->signature($request);
+        } catch (HttpException $exception) {
+            $this->auditInvalidWebhook($request, $tenant, 'invalid_signature_headers');
+
+            throw $exception;
+        }
+
         $secret = $this->secretForTenant($tenant);
 
         if ($secret === null || $secret === '') {
+            $this->auditInvalidWebhook($request, $tenant, 'secret_not_configured');
             throw new HttpException(Response::HTTP_UNAUTHORIZED, 'Webhook secret is not configured.');
         }
 
@@ -27,6 +41,7 @@ final class WebhookSignatureValidator
         $received = $this->normalizeSignature($signature);
 
         if (! hash_equals($expected, $received)) {
+            $this->auditInvalidWebhook($request, $tenant, 'invalid_signature');
             throw new HttpException(Response::HTTP_UNAUTHORIZED, 'Invalid webhook signature.');
         }
 
@@ -97,7 +112,20 @@ final class WebhookSignatureValidator
         );
 
         if (! Cache::add($key, true, now()->addSeconds($tolerance))) {
+            $this->audit->record('webhook.invalid', 'blocked', [
+                'reason' => 'replay_detected',
+                'timestamp' => $timestamp,
+            ], $tenant);
+
             throw new HttpException(Response::HTTP_CONFLICT, 'Webhook replay detected.');
         }
+    }
+
+    private function auditInvalidWebhook(Request $request, Tenant $tenant, string $reason): void
+    {
+        $this->audit->record('webhook.invalid', 'blocked', [
+            'reason' => $reason,
+            'signature_present' => $request->headers->has((string) config('whatsapp.webhooks.signature_header', 'X-Webhook-Signature')),
+        ], $tenant, null, $request);
     }
 }

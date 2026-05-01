@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ShowTenantConfigurationRequest;
 use App\Http\Requests\UpdateTenantConfigurationRequest;
 use App\Models\TenantConfiguration;
+use App\Services\Audit\AuditService;
 use App\Services\Tenancy\TenantConfigurationService;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +17,7 @@ final class TenantConfigurationController extends Controller
     public function __construct(
         private readonly TenantConfigurationService $configurations,
         private readonly TenantContext $tenantContext,
+        private readonly AuditService $audit,
     ) {
     }
 
@@ -34,6 +36,10 @@ final class TenantConfigurationController extends Controller
             $this->tenantContext->current(),
             $request->validated(),
         );
+        $this->audit->record('configuration.updated', 'success', [
+            'updated_fields' => array_keys($request->validated()),
+            'webhook_secret_updated' => $request->has('webhook_secret'),
+        ], $this->tenantContext->current(), request()->user());
 
         return response()->json([
             'data' => $this->resource($configuration),

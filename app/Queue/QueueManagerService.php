@@ -14,6 +14,7 @@ use App\Models\Tenant;
 use App\Models\TenantConfiguration;
 use App\Queue\Contracts\MessageQueueRecorderInterface;
 use App\Queue\Contracts\QueueControlInterface;
+use App\Services\Audit\AuditService;
 use App\Services\Tenancy\TenantConfigurationService;
 use App\Support\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
@@ -30,6 +31,7 @@ final readonly class QueueManagerService
         private TenantConfigurationService $configurationService,
         private TenantContext $tenantContext,
         private MessageQueueRecorderInterface $messageRecorder,
+        private AuditService $audit,
     ) {
     }
 
@@ -120,6 +122,11 @@ final readonly class QueueManagerService
                 $reservation->queuePositionSnapshot,
                 $threshold,
             ));
+            $this->audit->record('queue.congested', 'warning', [
+                'session_id' => $reservation->sessionId,
+                'queue_position_snapshot' => $reservation->queuePositionSnapshot,
+                'threshold' => $threshold,
+            ], $reservation->tenantId);
         }
     }
 
